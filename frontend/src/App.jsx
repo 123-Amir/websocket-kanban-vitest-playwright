@@ -6,7 +6,7 @@ import KanbanColumn from './components/KanbanColumn';
 import TaskForm from './components/TaskForm';
 import './components/Kanban.css';
 
-const socket = io('http://localhost:4000');
+const socket = io('https://kanban-backend-vzr9.onrender.com');
 
 function App() {
   const [tasks, setTasks] = useState({ todo: [], inProgress: [], done: [] });
