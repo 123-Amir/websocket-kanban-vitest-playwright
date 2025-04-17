@@ -1,19 +1,39 @@
-const express = require("express");
-const http = require("http");
-const { Server } = require("socket.io");
+const express = require('express');
+const http = require('http');
+const { Server } = require('socket.io');
+const cors = require('cors');
 
 const app = express();
+app.use(cors());
 const server = http.createServer(app);
-const io = new Server(server, { cors: { origin: "*" } });
+const io = new Server(server, {
+  cors: { origin: "http://localhost:3000" }
+});
 
-io.on("connection", (socket) => {
-  console.log("A user connected");
+let tasks = { todo: [], inProgress: [], done: [] };
 
-  // TODO: Implement WebSocket events for task management
+io.on('connection', (socket) => {
+  // Send all tasks to new client
+  socket.emit('sync:tasks', tasks);
 
-  socket.on("disconnect", () => {
-    console.log("User disconnected");
+  // Create task
+  socket.on('task:create', (task) => {
+    tasks.todo.push(task);
+    io.emit('task:created', tasks);
+  });
+
+  // Move task
+  socket.on('task:move', ({ taskId, from, to }) => {
+    const idx = tasks[from].findIndex(t => t.id === taskId);
+    if (idx > -1) {
+      const [task] = tasks[from].splice(idx, 1);
+      task.status = to;
+      tasks[to].push(task);
+      io.emit('task:moved', tasks);
+    }
   });
 });
 
-server.listen(5000, () => console.log("Server running on port 5000"));
+server.listen(4000, () => {
+  console.log('Server listening on port 4000');
+});
